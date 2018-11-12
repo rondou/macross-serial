@@ -13,7 +13,7 @@ class Macross(cli.Application):
     """The Serial Console Program"""
 
     PROGNAME: str = 'macross-serial'
-    VERSION: str = pkg_resources.require('macrossserial')[0].version
+    VERSION: str = pkg_resources.require('macross-serial')[0].version
     #VERSION: str = "0.0.1"
 
 
