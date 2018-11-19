@@ -47,6 +47,7 @@ script.tsv
   send  'account\n'
   send	'password\n'
   wait_for_regex    r'\b(([0-9A-Fa-f]{2}:){5})\b'
+  send  'reboot\n'
 
 method
 ............
@@ -54,4 +55,26 @@ method
 send
 ::::::::::::
 
-send	'ls -l\n'
+Write data to serial port
+
+.. code:: tsv
+
+  send  'poweroff\n'
+  
+wait_for_str
+::::::::::::
+
+Waiting until for find out a specific string then continue to execute next step.
+
+.. code:: tsv
+
+  wait_for_str  'system started at UTC'
+  
+wait_for_regex
+::::::::::::
+
+Waiting until for find out a regular expression pattern then continue to execute next step.
+
+.. code:: tsv
+
+  wait_for_regex    r'\b(([0-9A-Fa-f]{2}:){5})\b'
