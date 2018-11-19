@@ -36,8 +36,21 @@ Access for the serial port and run script.
 Script 
 ````````````
 
+Simple example
+............
+
+script.tsv
+
+.. code:: tsv
+
+  wait_for_str  'system started at UTC'
+  send  'account\n'
+  send	'password\n'
+  wait_for_regex    r'\b(([0-9A-Fa-f]{2}:){5})\b'
+
 method
 ............
+
 send
 ::::::::::::
 
