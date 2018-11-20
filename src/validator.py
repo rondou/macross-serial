@@ -30,6 +30,8 @@ class SerialValidator:
                 translatied.append([p[0], re.compile(r'{}'.format(p[1][2:-1]))])
             elif p[0] == 'wait_for_json':
                 translatied.append([p[0], str(p[1][1:-1].encode().decode('unicode_escape'))])
+            elif p[0] == 'wait_for_time':
+                translatied.append([p[0], int(p[1])])
             else:
                 pass
 
@@ -61,7 +63,13 @@ class SerialValidator:
             elif i[0] == 'wait_for_json':
                 hooks.append([self.wait_for_json, i[1]])
 
+            elif i[0] == 'wait_for_time':
+                hooks.append([self.wait_for_time, i[1]])
+
         self.serial_instance.hooks = hooks
+
+    async def nothing(self):
+        return False
 
     async def contains_regex(self, regex: Pattern):
         return SerialValidator.contains(text=self.serial_instance.load_buffer.output.getvalue(), regex=regex)
@@ -97,6 +105,9 @@ class SerialValidator:
                     continue
 
         return False
+
+    async def wait_for_time(self, sec: int):
+        return await SerialValidator.wait_for(lambda: self.nothing(), n_retry=sec)
 
     async def wait_for_regex(self, regex: str):
         return await SerialValidator.wait_for(lambda: self.contains_regex(re.compile(regex)), n_retry=180)
