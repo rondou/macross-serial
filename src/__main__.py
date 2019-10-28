@@ -65,5 +65,6 @@ class MacrossListPort(cli.Application):
 def main() -> int:
     Macross.run()
 
+
 if __name__ == '__main__':
     sys.exit(main())

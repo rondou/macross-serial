@@ -7,6 +7,7 @@ import aioserial
 
 from typing import Optional, List, Callable
 
+
 class StringIOQueue:
 
     def __init__(self, max_size: int):
@@ -93,7 +94,6 @@ class AsyncSerial:
             print("send =====", send_data)
             print("================================")
 
-
             data: str = self.read_and_put_to_buffer()
             print(data, end='')
             self.load_buffer.clean()
@@ -104,7 +104,7 @@ class AsyncSerial:
     async def execute_hooks(self):
         while True:
             for invoke in self.hooks:
-                await invoke[0](invoke[1])
+                await invoke[0](*invoke[1:])
                 #await invoke()
             await asyncio.sleep(2)
 
@@ -115,6 +115,7 @@ class AsyncSerial:
             self.send_outgoing_data(),
             self.execute_hooks(),
         ])
+
 
 if __name__ == '__main__':
     pass
