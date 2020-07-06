@@ -10,9 +10,9 @@ from .async_serial import AsyncSerial
 
 class SerialValidator:
 
-    def __init__(self, port, script_path, repeat_count):
+    def __init__(self, port, script_path, repeat_count, ipc_tunnel_address: str = ''):
         script: list = self.parse_script(script_path=script_path)
-        self.serial_instance: AsyncSerial = AsyncSerial(port)
+        self.serial_instance: AsyncSerial = AsyncSerial(port, ipc_tunnel_address)
         self.serial_instance.set_hook_repeat_count(repeat_count)
 
         self.script_to_func_generator(script=script)
@@ -38,6 +38,8 @@ class SerialValidator:
             if row:
                 if len(p) > 2:
                     row.append(float(p[2]))
+                if len(p) > 3:
+                    row.append(p[3])
                 translated.append(row)
 
         return translated
@@ -57,6 +59,8 @@ class SerialValidator:
             hook = [getattr(self, i[0]), i[1]]
             if len(i) > 2:
                 hook.append(i[2])
+            if len(i) > 3:
+                hook.append(i[3])
             hooks.append(hook)
 
         self.serial_instance.hooks = hooks
