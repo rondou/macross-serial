@@ -81,7 +81,7 @@ E.g.
 wait_for_regex	r'\b(([0-9A-Fa-f]{2}:){5})\b'
 ```
 
-### wait_for_second
+#### wait_for_second
 
 Wait/sleep/pause for N seconds.
 
