@@ -15,6 +15,17 @@ class Macross(plumbum.cli.Application):
     PROGNAME: str = 'macross-serial'
     VERSION: str = importlib.metadata.version('macross-serial')
 
+    _debug: bool = False
+
+    @plumbum.cli.switch(["-d", "--debug"])
+    def set_debug(self):
+        """Enable debug"""
+        self._debug = True
+
+    def main(self, *args):
+        if self._debug:
+            logging.getLogger(__package__).setLevel(logging.DEBUG)
+
 
 @Macross.subcommand('run')
 class MacrossRunScript(plumbum.cli.Application):
@@ -26,8 +37,9 @@ class MacrossRunScript(plumbum.cli.Application):
         """set repeat times"""
         self._repeat_count = count
 
-    def main(self, port, script_file):
-        serial_validator = SerialValidator(port=port, script_path=script_file, repeat_count=self._repeat_count)
+    def main(self, port, script_file, ipc_tunnel_address: str = ''):
+        serial_validator = SerialValidator(
+            port=port, script_path=script_file, repeat_count=self._repeat_count, ipc_tunnel_address=ipc_tunnel_address)
 
         try:
             asyncio.run(serial_validator.validate())

@@ -3,9 +3,11 @@ import serial
 import io
 import logging
 import sys
-from typing import Callable, List, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import aioserial
+
+from .multiprocessing import ProgressNotifier
 
 
 class StringIOQueue:
@@ -38,7 +40,7 @@ class StringIOQueue:
 
 class AsyncSerial:
 
-    def __init__(self, port: str):
+    def __init__(self, port: str, ipc_tunnel_address: str = ''):
         self.port: str = port
         self.baud: int = 115200
         self.serial_instance: aioserial.AioSerial = aioserial.AioSerial(self.port, self.baud)
@@ -47,6 +49,8 @@ class AsyncSerial:
 
         self.load_buffer = StringIOQueue(4000)
         self.send_buffer = None
+
+        self.progress_notifier: ProgressNotifier = ProgressNotifier(ipc_tunnel_address)
 
     @property
     def hooks(self) -> List[Tuple[Callable, str]]:
@@ -103,10 +107,15 @@ class AsyncSerial:
     async def execute_hooks(self):
         try:
             for invoke in self.hooks:
+                progress_message: str = invoke[3] if len(invoke) > 3 else ''
+
                 if len(invoke) > 2:
                     await asyncio.wait_for(invoke[0](invoke[1]), invoke[2])
                 else:
                     await invoke[0](invoke[1])
+
+                if progress_message:
+                    self.progress_notifier.notify(progress_message)
             while self.hook_repeat_count:
                 for invoke in self.hooks:
                     if len(invoke) > 2:
@@ -115,11 +124,13 @@ class AsyncSerial:
                         await invoke[0](invoke[1])
                 if self.hook_repeat_count > 0:
                     self.hook_repeat_count -= 1
-        except asyncio.TimeoutError:
-            print('ERROR: timeout', file=sys.stderr)
+        except asyncio.TimeoutError as e:
+            logging.getLogger(__package__).exception(e)
+            self.progress_notifier.notify('ERROR: TIMEOUT')
             raise
         except Exception as e:
             logging.getLogger(__package__).debug(e)
+            self.progress_notifier.notify(f'ERROR: {type(e).__name__}: {e}')
             raise
 
     async def console(self):
