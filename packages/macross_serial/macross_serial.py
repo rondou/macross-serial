@@ -1,0 +1,60 @@
+import asyncio
+import importlib.metadata
+import logging
+import os
+import sys
+
+import plumbum.cli
+
+from .validator import SerialValidator
+
+
+class Macross(plumbum.cli.Application):
+    """The Serial Console Program"""
+
+    PROGNAME: str = 'macross-serial'
+    VERSION: str = importlib.metadata.version('macross-serial')
+
+
+@Macross.subcommand('run')
+class MacrossRunScript(plumbum.cli.Application):
+
+    _repeat_count: int = 0
+
+    @plumbum.cli.switch('--repeat', int)
+    def set_repeat_count(self, count):
+        """set repeat times"""
+        self._repeat_count = count
+
+    def main(self, port, script_file):
+        serial_validator = SerialValidator(port=port, script_path=script_file, repeat_count=self._repeat_count)
+
+        try:
+            asyncio.run(serial_validator.validate())
+        except Exception as e:
+            logging.getLogger(__package__).debug(e)
+
+
+@Macross.subcommand('list-port')
+class MacrossListPort(plumbum.cli.Application):
+    """List serial port name"""
+
+    def main(self):
+        if os.name == 'nt':  # sys.platform == 'win32':
+            from serial.tools.list_ports_windows import comports
+        elif os.name == 'posix':
+            from serial.tools.list_ports_posix import comports
+        else:
+            raise ImportError("Sorry: no implementation for your platform ('{}') available".format(os.name))
+
+        for info in comports():
+            port, desc, hwid = info
+            print(port)
+
+
+def main() -> int:
+    return Macross.run()
+
+
+if __name__ == '__main__':
+    sys.exit(main())

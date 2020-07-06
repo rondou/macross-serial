@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
 import asyncio
 import serial
 import io
+import logging
+import sys
+from typing import Callable, List, Tuple
 
 import aioserial
-
-from typing import Optional, List, Callable
 
 
 class StringIOQueue:
@@ -42,27 +42,29 @@ class AsyncSerial:
         self.port: str = port
         self.baud: int = 115200
         self.serial_instance: aioserial.AioSerial = aioserial.AioSerial(self.port, self.baud)
-        self.hooks: Optional[List[List[Callable, str]]] = None
+        self.hooks: List[Tuple[Callable, str]] = []
+        self.hook_repeat_count: int = 0
 
         self.load_buffer = StringIOQueue(4000)
         self.send_buffer = None
 
     @property
-    def hooks(self) -> Optional[List[Callable]]:
+    def hooks(self) -> List[Tuple[Callable, str]]:
         return self.__hooks
 
     @hooks.setter
-    def hooks(self, hooks: Optional[List[Callable]]):
+    def hooks(self, hooks: List[Tuple[Callable, str]]):
         self.__hooks = hooks
+
+    def set_hook_repeat_count(self, count: int):
+        self.hook_repeat_count = count
 
     def _read(self) -> str:
         try:
             data: str = self.serial_instance.read(self.serial_instance.in_waiting).decode(errors='ignore')
-
+            return data
         except serial.SerialException as e:
-            print(e)
-
-        return data
+            logging.getLogger(__package__).debug(e)
 
     def _write(self, data):
         try:
@@ -71,7 +73,7 @@ class AsyncSerial:
                 return  # Whole request satisfied
 
         except serial.SerialException as e:
-            print(e)
+            logging.getLogger(__package__).debug(e)
 
     def read_and_put_to_buffer(self) -> str:
         data: str = self._read()
@@ -90,23 +92,35 @@ class AsyncSerial:
         while True:
             send_data = await self.send_buffer.get()
             self.send_buffer.task_done()
-            print("================================")
-            print("send =====", send_data)
-            print("================================")
 
             data: str = self.read_and_put_to_buffer()
             print(data, end='')
             self.load_buffer.clean()
 
             self._write(send_data)
-            await asyncio.sleep(5)
+            await asyncio.sleep(0.001)
 
     async def execute_hooks(self):
-        while True:
+        try:
             for invoke in self.hooks:
-                await invoke[0](*invoke[1:])
-                #await invoke()
-            await asyncio.sleep(2)
+                if len(invoke) > 2:
+                    await asyncio.wait_for(invoke[0](invoke[1]), invoke[2])
+                else:
+                    await invoke[0](invoke[1])
+            while self.hook_repeat_count:
+                for invoke in self.hooks:
+                    if len(invoke) > 2:
+                        await asyncio.wait_for(invoke[0](invoke[1]), invoke[2])
+                    else:
+                        await invoke[0](invoke[1])
+                if self.hook_repeat_count > 0:
+                    self.hook_repeat_count -= 1
+        except asyncio.TimeoutError:
+            print('ERROR: timeout', file=sys.stderr)
+            raise
+        except Exception as e:
+            logging.getLogger(__package__).debug(e)
+            raise
 
     async def console(self):
         self.send_buffer = asyncio.Queue(loop=asyncio.get_running_loop())
@@ -114,8 +128,4 @@ class AsyncSerial:
             self.display_incomming_data(),
             self.send_outgoing_data(),
             self.execute_hooks(),
-        ])
-
-
-if __name__ == '__main__':
-    pass
+        ], return_when=asyncio.FIRST_EXCEPTION)
