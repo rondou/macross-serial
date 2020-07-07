@@ -139,4 +139,4 @@ class AsyncSerial:
             self.display_incomming_data(),
             self.send_outgoing_data(),
             self.execute_hooks(),
-        ], return_when=asyncio.FIRST_EXCEPTION)
+        ], return_when=asyncio.FIRST_COMPLETED)
