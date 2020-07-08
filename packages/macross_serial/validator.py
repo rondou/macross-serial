@@ -68,8 +68,9 @@ class SerialValidator:
         return self.contains(text=self.serial_instance.load_buffer.output.getvalue(), regex=regex)
 
     async def contains_string(self, mesg: str):
-        return mesg in self.serial_instance.load_buffer.output.getvalue()
+        return mesg if mesg in self.serial_instance.load_buffer.output.getvalue() else ''
 
+    # TODO: Refine
     async def contains_json(self, text: str, scheme: dict, regex: Pattern = re.compile(r'^\s*{.*}\s*$')):
         for line in text.splitlines():
             if self.contains(text=line, regex=regex):
@@ -93,28 +94,29 @@ class SerialValidator:
                                     text=json_value[key], regex=re.compile(scheme[key].get('regex', r'.*'))):
                                 return False
 
-                    return True
+                    return json_value
                 except Exception as e:
                     logging.getLogger(__package__).debug(e)
 
         return False
 
     async def wait_for_regex(self, regex: str):
-        await self.wait_for(lambda: self.contains_regex(re.compile(regex)))
+        return await self.wait_for(lambda: self.contains_regex(re.compile(regex)))
 
     async def wait_for_str(self, mesg: str):
-        await self.wait_for(lambda: self.contains_string(mesg))
+        return await self.wait_for(lambda: self.contains_string(mesg))
 
+    # TODO: Refine
     async def wait_for_json(self, scheme: str, regex: str = r'^\s*\{.*\}\s*$'):
         try:
-            await self.wait_for(
-                lambda: self.contains_json(
-                    self.serial_instance.load_buffer.output.getvalue(),
-                    json.loads(scheme),
-                    re.compile(regex)),
-                n_retry=180)
+            return await self.wait_for(
+                    lambda: self.contains_json(
+                        self.serial_instance.load_buffer.output.getvalue(),
+                        json.loads(scheme),
+                        re.compile(regex)),
+                    n_retry=180)
         except json.JSONDecodeError:
-            return False
+            pass
 
     @classmethod
     async def wait_for_second(cls, second: float):
@@ -125,19 +127,19 @@ class SerialValidator:
         await self.serial_instance.send_buffer.join()
 
     @staticmethod
-    def contains(text: str, regex: Pattern) -> bool:
+    def contains(text: str, regex: Pattern):
         for line in text.splitlines():
-            if bool(regex.search(line)):
-                return True
-        return False
+            rs = regex.search(line)
+            if bool(rs):
+                return rs
 
     @staticmethod
     async def wait_for(predict: Callable, n_retry: int = -1, seconds: float = 0.01):
-        result: bool = False
+        content = None
 
         while n_retry:
-            if await predict():
-                result = True
+            content = await predict()
+            if content:
                 break
             else:
                 await asyncio.sleep(seconds)
@@ -145,7 +147,7 @@ class SerialValidator:
             if n_retry > 0:
                 n_retry -= 1
 
-        return result
+        return content
 
     async def validate(self):
         await self.serial_instance.console()

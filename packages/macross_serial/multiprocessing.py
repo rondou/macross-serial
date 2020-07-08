@@ -18,7 +18,6 @@ class DummyIPCManager(multiprocessing.managers.BaseManager):
     def queue(self):
         class DummyQueue:
             def put(self, progress: str):
-                print(progress)
                 pass
         return DummyQueue()
 

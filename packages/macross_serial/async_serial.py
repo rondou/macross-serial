@@ -1,5 +1,6 @@
 import asyncio
 import serial
+import re
 import io
 import logging
 import sys
@@ -110,11 +111,15 @@ class AsyncSerial:
                 progress_message: str = invoke[3] if len(invoke) > 3 else ''
 
                 if len(invoke) > 2:
-                    await asyncio.wait_for(invoke[0](invoke[1]), invoke[2])
+                    result = await asyncio.wait_for(invoke[0](invoke[1]), invoke[2])
                 else:
-                    await invoke[0](invoke[1])
+                    result = await invoke[0](invoke[1])
 
                 if progress_message:
+                    rs = re.search(r'\\(\d+)', progress_message)
+                    if rs and result:
+                        g = int(rs.group(1))
+                        progress_message = progress_message.replace("\\{}".format(g), result.group(g))
                     self.progress_notifier.notify(progress_message)
             while self.hook_repeat_count:
                 for invoke in self.hooks:
