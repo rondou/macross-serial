@@ -60,8 +60,7 @@ class MacrossListPort(plumbum.cli.Application):
             raise ImportError("Sorry: no implementation for your platform ('{}') available".format(os.name))
 
         for info in comports():
-            port, desc, hwid = info
-            print(port)
+            print(info.device)
 
 
 def main() -> int:
