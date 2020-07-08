@@ -23,6 +23,9 @@ class SerialValidator:
 
         for p in parameter:
             row = []
+            if not len(p) or p[0].startswith('#'):
+                continue
+
             if p[0] == 'send':
                 row = [p[0], str.encode(p[1][1:-1].encode().decode('unicode_escape'))]
             elif p[0] == 'wait_for_str':
@@ -46,11 +49,7 @@ class SerialValidator:
 
     def parse_script(self, script_path: str = None) -> list:
         with open(script_path) as tf:
-            reader = list(csv.reader(tf, delimiter='\t'))
-            if reader[0][0] == 'ACTION' and reader[0][1] == 'CONTENT':
-                return self.translate_parameter(reader[1:])
-
-        return list()
+            return self.translate_parameter(list(csv.reader(tf, delimiter='\t')))
 
     def script_to_func_generator(self, script: list):
         hooks = []
