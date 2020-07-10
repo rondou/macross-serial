@@ -4,7 +4,7 @@ to = {format = "setuppy", path = "setup.py"}
 
 [tool.poetry]
 name = "macross-serial"
-version = "1.0.6"
+version = "1.0.7"
 description = ""
 authors = ["Rondou Chen <40and44sis@gmail.com>", "Henry Chang <mr.changyuheng@gmail.com>"]
 readme = "README.md"
