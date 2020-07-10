@@ -45,6 +45,7 @@ class MacrossRunScript(plumbum.cli.Application):
             asyncio.run(serial_validator.validate())
         except Exception as e:
             logging.getLogger(__package__).debug(e)
+            return 1
 
 
 @Macross.subcommand('list-port')
