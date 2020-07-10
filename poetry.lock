@@ -289,6 +289,14 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 version = "2.10"
 
 [[package]]
+category = "main"
+description = ""
+name = "ipcq"
+optional = false
+python-versions = ">=3.6,<4.0"
+version = "1.0.2"
+
+[[package]]
 category = "dev"
 description = "A very fast and expressive template engine."
 name = "jinja2"
@@ -535,7 +543,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
 version = "0.17.0"
 
 [metadata]
-content-hash = "ceb662954d1a2ad390b9bfae86539d83143b855ef48b9b69ced70df3bf036f30"
+content-hash = "b519b2e8ab7ab919882c97f8bb04adf4ef40854b381c0e3073da44a516af254e"
 python-versions = "^3.8.1"
 
 [metadata.files]
@@ -639,6 +647,10 @@ docutils = [
 idna = [
     {file = "idna-2.10-py2.py3-none-any.whl", hash = "sha256:b97d804b1e9b523befed77c48dacec60e6dcb0b5391d57af6a65a312a90648c0"},
     {file = "idna-2.10.tar.gz", hash = "sha256:b307872f855b18632ce0c21c5e45be78c0ea7ae4c15c828c20788b26921eb3f6"},
+]
+ipcq = [
+    {file = "ipcq-1.0.2-py3-none-any.whl", hash = "sha256:ad881e258abf283f05162281e31c72d7c995c8ebf9af3c7fd61977d2910ccc4a"},
+    {file = "ipcq-1.0.2.tar.gz", hash = "sha256:3e6beb3e61c557cd592505e8dd055665a0d65c6dda4c275c926a0ed8905170ea"},
 ]
 jinja2 = [
     {file = "Jinja2-2.11.2-py2.py3-none-any.whl", hash = "sha256:f0a4641d3cf955324a89c04f3d94663aa4d638abe8f733ecd3582848e1c37035"},
