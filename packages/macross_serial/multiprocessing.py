@@ -8,6 +8,9 @@ from .util import Singleton
 
 
 class DummyQueueManagerClient(ipcq.QueueManagerClient):
+    def connect(self):
+        pass
+
     def get_queue(self, *args, **kwargs) -> 'DummyQueue':
         return DummyQueue()
 
