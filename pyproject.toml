@@ -16,7 +16,7 @@ packages = [
 [tool.poetry.dependencies]
 python = "^3.8.1"
 aioserial = "*"
-ipcq = "^1.0.2"
+ipcq = "^1.1.0"
 plumbum = "*"
 
 [tool.poetry.dev-dependencies]
