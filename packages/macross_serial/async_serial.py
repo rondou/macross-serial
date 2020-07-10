@@ -140,7 +140,6 @@ class AsyncSerial:
 
     async def console(self):
         self.send_buffer = asyncio.Queue(loop=asyncio.get_running_loop())
-        await asyncio.gather(
-            self.display_incomming_data(),
-            self.send_outgoing_data(),
-            self.execute_hooks())
+        asyncio.ensure_future(self.display_incomming_data())
+        asyncio.ensure_future(self.send_outgoing_data())
+        await self.execute_hooks()
