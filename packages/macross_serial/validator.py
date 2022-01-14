@@ -10,9 +10,9 @@ from .async_serial import AsyncSerial
 
 class SerialValidator:
 
-    def __init__(self, port, script_path, repeat_count, ipc_tunnel_address: str = ''):
+    def __init__(self, port, script_path, repeat_count, baud=115200, ipc_tunnel_address: str = ''):
         script: list = self.parse_script(script_path=script_path)
-        self.serial_instance: AsyncSerial = AsyncSerial(port, ipc_tunnel_address)
+        self.serial_instance: AsyncSerial = AsyncSerial(port, baud, ipc_tunnel_address)
         self.serial_instance.set_hook_repeat_count(repeat_count)
 
         self.script_to_func_generator(script=script)
@@ -28,6 +28,10 @@ class SerialValidator:
 
             if p[0] == 'send':
                 row = [p[0], str.encode(p[1][1:-1].encode().decode('unicode_escape'))]
+            elif p[0] == 'send_hex':
+                row = [p[0], bytes.fromhex(p[1][1:-1])]
+            elif p[0] == 'wait_for_hex':
+                row = [p[0], bytes.fromhex(p[1][1:-1])]
             elif p[0] == 'wait_for_str':
                 row = [p[0], str(p[1][1:-1].encode().decode('unicode_escape'))]
             elif p[0] == 'wait_for_regex':
@@ -70,6 +74,13 @@ class SerialValidator:
     async def contains_string(self, mesg: str):
         return mesg if mesg in self.serial_instance.load_buffer.output.getvalue() else ''
 
+    async def contains_hex(self, mesg: bytes):
+        buffer_data = self.serial_instance.load_buffer.output.getvalue()
+        if buffer_data:
+            return mesg.hex() if mesg.hex() in buffer_data else ''
+        else:
+            return ''
+
     # TODO: Refine
     async def contains_json(self, text: str, scheme: dict, regex: Pattern = re.compile(r'^\s*{.*}\s*$')):
         for line in text.splitlines():
@@ -106,15 +117,18 @@ class SerialValidator:
     async def wait_for_str(self, mesg: str):
         return await self.wait_for(lambda: self.contains_string(mesg))
 
+    async def wait_for_hex(self, mesg: str):
+        return await self.wait_for(lambda: self.contains_hex(mesg))
+
     # TODO: Refine
     async def wait_for_json(self, scheme: str, regex: str = r'^\s*\{.*\}\s*$'):
         try:
             return await self.wait_for(
-                    lambda: self.contains_json(
-                        self.serial_instance.load_buffer.output.getvalue(),
-                        json.loads(scheme),
-                        re.compile(regex)),
-                    n_retry=180)
+                lambda: self.contains_json(
+                    self.serial_instance.load_buffer.output.getvalue(),
+                    json.loads(scheme),
+                    re.compile(regex)),
+                n_retry=180)
         except json.JSONDecodeError:
             pass
 
@@ -123,6 +137,10 @@ class SerialValidator:
         await asyncio.sleep(second)
 
     async def send(self, command: str):
+        await self.serial_instance.send_buffer.put(command)
+        await self.serial_instance.send_buffer.join()
+
+    async def send_hex(self, command: str):
         await self.serial_instance.send_buffer.put(command)
         await self.serial_instance.send_buffer.join()
 
