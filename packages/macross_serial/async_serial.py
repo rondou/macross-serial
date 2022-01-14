@@ -41,9 +41,9 @@ class StringIOQueue:
 
 class AsyncSerial:
 
-    def __init__(self, port: str, ipc_tunnel_address: str = ''):
+    def __init__(self, port: str, baud: int = 115200, ipc_tunnel_address: str = ''):
         self.port: str = port
-        self.baud: int = 115200
+        self.baud: int = baud
         self.serial_instance: aioserial.AioSerial = aioserial.AioSerial(self.port, self.baud)
         self.hooks: List[Tuple[Callable, str]] = []
         self.hook_repeat_count: int = 0
@@ -66,8 +66,14 @@ class AsyncSerial:
 
     def _read(self) -> str:
         try:
-            data: str = self.serial_instance.read(self.serial_instance.in_waiting).decode(errors='ignore')
-            return data
+            original = self.serial_instance.read(self.serial_instance.in_waiting)
+            if original != b'':
+                try:
+                    return original.decode()
+                except:
+                    return original.hex()
+            else:
+                return ''
         except serial.SerialException as e:
             logging.getLogger(__package__).debug(e)
 
